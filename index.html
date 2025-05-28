@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Vencimento de Certificados</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
+    <!-- Estilo personalizado -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="assets/icons/ico.ico">
+    <link rel="icon" type="image/png" href="assets/icons/ico.png">
+    <link rel="apple-touch-icon" href="assets/icons/ico.png">
+
+
+</head>
+<body class="bg-gray-100">
+    
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-8">Controle de Vencimento de Certificados Digitais</h1>
+        
+        <!-- Stats Cards -->
+        <div class="stats-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500">Total de Instituições</p>
+                        <h3 class="text-2xl font-bold" id="total-institutions">0</h3>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full">
+                        <i class="fas fa-building text-blue-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500">Instituições Ativas</p>
+                        <h3 class="text-2xl font-bold" id="active-institutions">0</h3>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-full">
+                        <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500">Instituições Inativas</p>
+                        <h3 class="text-2xl font-bold" id="inactive-institutions">0</h3>
+                    </div>
+                    <div class="bg-red-100 p-3 rounded-full">
+                        <i class="fas fa-times-circle text-red-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500">Vencimento este mês</p>
+                        <h3 class="text-2xl font-bold" id="expiring-institutions">0</h3>
+                    </div>
+                    <div class="bg-yellow-100 p-3 rounded-full">
+                        <i class="fas fa-exclamation-triangle text-yellow-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="toolbar">
+  <div class="button-group">
+    <button onclick="openAddModal()" class="btn btn-blue">
+      <i class="fas fa-plus"></i> Cadastrar Instituição
+    </button>
+    <button onclick="exportData()" class="btn btn-green">
+      <i class="fas fa-file-export"></i> Exportar
+    </button>
+    <label for="import-file" class="btn btn-purple">
+      <i class="fas fa-file-import"></i> Importar
+      <input type="file" id="import-file" class="input-hidden" onchange="importData(this)">
+    </label>
+    <button onclick="clearData()" class="btn btn-red">
+      <i class="fas fa-trash"></i> Limpar Dados
+    </button>
+  </div>
+
+  <div class="search-box">
+    <input type="text" id="search-input" placeholder="Pesquisar...">
+    <i class="fas fa-search search-icon"></i>
+  </div>
+</div>
+
+        
+        <!-- Table -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="table-responsive">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefone</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vencimento</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sistema</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Porte</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="institutions-table" class="bg-white divide-y divide-gray-200">
+                        <!-- Data will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="flex justify-between items-center mt-4">
+            <div class="text-sm text-gray-500">
+                Mostrando <span id="showing-from">1</span> a <span id="showing-to">10</span> de <span id="total-items">0</span> registros
+            </div>
+            <div class="flex gap-1">
+                <button id="prev-page" class="px-3 py-1 border rounded disabled:opacity-50" disabled>
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button id="next-page" class="px-3 py-1 border rounded disabled:opacity-50" disabled>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Modal -->
+    <div id="add-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddModal()">&times;</span>
+            <h2 class="text-xl font-bold mb-4">Cadastrar Nova Instituição</h2>
+            <form id="add-form" class="space-y-4">
+                <div>
+                    <label for="add-name" class="block text-sm font-medium text-gray-700">Nome da Instituição*</label>
+                    <input type="text" id="add-name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label for="add-phone" class="block text-sm font-medium text-gray-700">Telefone de Contato*</label>
+                    <input type="tel" id="add-phone" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label for="add-expiration" class="block text-sm font-medium text-gray-700">Data de Vencimento*</label>
+                    <input type="date" id="add-expiration" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label for="add-system" class="block text-sm font-medium text-gray-700">Sistema Comercial Implantado</label>
+                    <input type="text" id="add-system" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label for="add-type" class="block text-sm font-medium text-gray-700">Tipo de Instituição*</label>
+                    <select id="add-type" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Selecione...</option>
+                        <option value="Comércio">Comércio</option>
+                        <option value="Serviço">Serviço</option>
+                        <option value="Sindicato">Sindicato</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="add-size" class="block text-sm font-medium text-gray-700">Porte Jurídico*</label>
+                    <select id="add-size" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Selecione...</option>
+                        <option value="MEI">MEI (Microempreendedor Individual)</option>
+                        <option value="ME">ME (Microempresa)</option>
+                        <option value="EPP">EPP (Empresa de Pequeno Porte)</option>
+                        <option value="Média Empresa">Média Empresa</option>
+                        <option value="Grande Empresa">Grande Empresa</option>
+                        <option value="Associação">Associação</option>
+                        <option value="Cooperativa">Cooperativa</option>
+                        <option value="Fundação">Fundação</option>
+                        <option value="OSCIP">OSCIP (Organização da Sociedade Civil de Interesse Público)</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="add-status" class="block text-sm font-medium text-gray-700">Status*</label>
+                    <select id="add-status" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="Ativo">Ativo</option>
+                        <option value="Inativo">Inativo</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="add-notes" class="block text-sm font-medium text-gray-700">Observações</label>
+                    <textarea id="add-notes" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+                </div>
+                
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeAddModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2 class="text-xl font-bold mb-4">Editar Instituição</h2>
+            <form id="edit-form" class="space-y-4">
+                <input type="hidden" id="edit-id">
+                <input type="hidden" id="edit-hash">
+                
+                <div>
+                    <label for="edit-name" class="block text-sm font-medium text-gray-700">Nome da Instituição*</label>
+                    <input type="text" id="edit-name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label for="edit-phone" class="block text-sm font-medium text-gray-700">Telefone de Contato*</label>
+                    <input type="tel" id="edit-phone" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label for="edit-expiration" class="block text-sm font-medium text-gray-700">Data de Vencimento*</label>
+                    <input type="date" id="edit-expiration" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label for="edit-system" class="block text-sm font-medium text-gray-700">Sistema Comercial Implantado</label>
+                    <input type="text" id="edit-system" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label for="edit-type" class="block text-sm font-medium text-gray-700">Tipo de Instituição*</label>
+                    <select id="edit-type" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Selecione...</option>
+                        <option value="Comércio">Comércio</option>
+                        <option value="Serviço">Serviço</option>
+                        <option value="Sindicato">Sindicato</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="edit-size" class="block text-sm font-medium text-gray-700">Porte Jurídico*</label>
+                    <select id="edit-size" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Selecione...</option>
+                        <option value="MEI">MEI (Microempreendedor Individual)</option>
+                        <option value="ME">ME (Microempresa)</option>
+                        <option value="EPP">EPP (Empresa de Pequeno Porte)</option>
+                        <option value="Média Empresa">Média Empresa</option>
+                        <option value="Grande Empresa">Grande Empresa</option>
+                        <option value="Associação">Associação</option>
+                        <option value="Cooperativa">Cooperativa</option>
+                        <option value="Fundação">Fundação</option>
+                        <option value="OSCIP">OSCIP (Organização da Sociedade Civil de Interesse Público)</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="edit-status" class="block text-sm font-medium text-gray-700">Status*</label>
+                    <select id="edit-status" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="Ativo">Ativo</option>
+                        <option value="Inativo">Inativo</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="edit-notes" class="block text-sm font-medium text-gray-700">Observações</label>
+                    <textarea id="edit-notes" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+                </div>
+                
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeEditModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Status Modal -->
+    <div id="status-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeStatusModal()">&times;</span>
+            <h2 class="text-xl font-bold mb-4">Alterar Status</h2>
+            <form id="status-form" class="space-y-4">
+                <input type="hidden" id="status-id">
+                <input type="hidden" id="status-hash">
+                
+                <div>
+                    <p class="text-sm font-medium text-gray-700">Instituição:</p>
+                    <p id="status-name" class="font-semibold"></p>
+                </div>
+                
+                <div>
+                    <p class="text-sm font-medium text-gray-700">Status atual:</p>
+                    <p id="current-status" class="font-semibold"></p>
+                </div>
+                
+                <div>
+                    <label for="new-status" class="block text-sm font-medium text-gray-700">Novo Status*</label>
+                    <select id="new-status" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="Ativo">Ativo</option>
+                        <option value="Inativo">Inativo</option>
+                    </select>
+                </div>
+                
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeStatusModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Confirmar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDeleteModal()">&times;</span>
+            <h2 class="text-xl font-bold mb-4">Confirmar Exclusão</h2>
+            <div class="space-y-4">
+                <input type="hidden" id="delete-id">
+                <input type="hidden" id="delete-hash">
+                
+                <p>Tem certeza que deseja excluir a instituição <span id="delete-name" class="font-semibold"></span>?</p>
+                <p class="text-sm text-red-600">Esta ação não pode ser desfeita.</p>
+                
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Cancelar
+                    </button>
+                    <button type="button" onclick="confirmDelete()" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        Excluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+document.getElementById('add-phone').addEventListener('input', function (e) {
+  let value = e.target.value.replace(/\D/g, ''); // remove tudo que não for número
+
+  if (value.length > 11) value = value.slice(0, 11); // limita a 11 dígitos
+
+  // Aplica máscara
+  if (value.length <= 10) {
+    value = value.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+  } else {
+    value = value.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+  }
+
+  e.target.value = value;
+});
+</script>
+
+</body>
+</html>
